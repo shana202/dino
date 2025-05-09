@@ -17,6 +17,7 @@
     background-color: #f7f7f7;
     border: 1px solid #ccc;
     }
+    
 
     </style>
     
@@ -32,6 +33,11 @@
         let trexImage = new Image();
         trexImage.src = 'https://upload.wikimedia.org/wikipedia/commons/3/3b/Chromium_T-Rex-error-offline.svg';
 
+        let birdImage = new Image();
+        birdImage.src   = 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Hummingbird_Bird_Vintage_Art.png/330px-Hummingbird_Bird_Vintage_Art.png'; // example bird sprite
+        let cactusImage = new Image();
+        cactusImage.src   = 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Cactus_with_small_base.png/250px-Cactus_with_small_base.png'; // example cactus
+
 
         
 
@@ -45,9 +51,11 @@
             isJumping: false
         };
 
+            
+
         let game = {
             groundY: 260,
-            spawnFrequency: 150,
+            spawnFrequency: 80,
             obstacleSpeed: 5,
             score: 0,
 
@@ -91,37 +99,45 @@
 
             // Spawn obstacles
             if (frameCount % game.spawnFrequency === 0) {
-                let obstacle = {
-                    x: canvas.width,
-                    y: 270,
-                    width: 30,
-                    height: 30
-                };
-                obstacles.push(obstacle);
-            }
+        const type = Math.random() < 0.5 ? 'cactus' : 'bird';
+        let obstacle = { type, x: canvas.width };
+
+        if (type === 'cactus') {
+          obstacle.y      = game.groundY - 10;
+          obstacle.width  = 30;
+          obstacle.height = 50;
+        } else {
+          obstacle.y      = game.groundY - 40;   // fly height
+          obstacle.width  = 40;
+          obstacle.height = 30;
+        }
+
+        obstacles.push(obstacle);
+      }
+    
 
             // Update obstacles
-            obstacles.forEach((obstacle, index) => {
-                obstacle.x -= game.obstacleSpeed;
-                if (obstacle.x + obstacle.width < 0) {
-                    obstacles.splice(index, 1);
-                    game.score++;
-                }
+        obstacles.forEach((o,i) => {
+        o.x -= game.obstacleSpeed;
+        // remove off-screen
+        if (o.x + o.width < 0) {
+          obstacles.splice(i, 1);
+          game.score++;
+        }
 
                 // Check for collision
-                if (
-                    trex.x < obstacle.x + obstacle.width &&
-                    trex.x + trex.width > obstacle.x &&
-                    trex.y < obstacle.y + obstacle.height &&
-                    trex.y + trex.height > obstacle.y
+            if (
+                trex.x < o.x + o.width &&
+                trex.x + trex.width > o.x &&
+                trex.y < o.y + o.height &&
+                trex.y + trex.height > o.y
                 ) {
+                    // Collision detected
                     isGameOver = true;
                 }
             });
         }
-
-        
-
+    
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -129,16 +145,28 @@
             ctx.drawImage(trexImage, trex.x, trex.y, trex.width, trex.height);
 
             // Draw obstacles
+            obstacles.forEach(o => {
+        if (o.type === 'cactus') {
+          // image or rectangle fallback
+          if (cactusImage.complete) {
+            ctx.drawImage(cactusImage, o.x, o.y, o.width, o.height);
+          } else {
             ctx.fillStyle = '#555';
-            obstacles.forEach(obstacle => {
-                ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-            });
-
-            ctx.fillStyle = 'black';
-            ctx.font = '20px Arial';
-            ctx.fillText(`Score: ${game.score}`, 10, 30);
-
-            // Draw game over text
+            ctx.fillRect(o.x, o.y, o.width, o.height);
+          }
+        } else {
+          if (birdImage.complete) {
+            ctx.drawImage(birdImage, o.x, o.y, o.width, o.height);
+          } else {
+            ctx.fillStyle = 'brown';
+            ctx.fillRect(o.x, o.y, o.width, o.height);
+          }
+        }
+      });
+        ctx.fillStyle = 'black';
+        ctx.font = '20px Arial';
+        ctx.fillText(`Score: ${game.score}`, 10, 30);      
+      // Draw game over text
             if (isGameOver) {
                 ctx.fillStyle = 'red';
                 ctx.font = '30px Arial';
